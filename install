@@ -35,7 +35,7 @@ elif [ "$source" == "git" ]
         then
       echo -e "\e[32mConfiguring services.."
       sleep 2
-      php /var/www/html/froxlor/install/scripts/config-services.php --froxlor-dir=/var/www/html/froxlor --apply=https://raw.githubusercontent.com/ianklemm/froxlor-install/master/config.json --import-settings=https://raw.githubusercontent.com/ianklemm/froxlor-install/master/settings.json
+      php /var/www/html/froxlor/install/scripts/config-services.php --froxlor-dir=/var/www/html/froxlor --apply=https://raw.githubusercontent.com/iandk/froxlor-install/master/config.json --import-settings=https://raw.githubusercontent.com/iandk/froxlor-install/master/settings.json
     else
       exit 1
     fi
