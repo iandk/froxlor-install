@@ -232,5 +232,5 @@
     "panel.version": "0.9.39.5",
     "panel.db_version": "201802130",
     "phpfpm.envpath": "/usr/local/bin:/usr/bin:/bin",
-    "_sha": "bf45fd7a4de2e8502d828e8803e490ed088d7b3f"
+    "_sha": "02ddb81def4a8112aa7ceb42291ed1997f6d37c2"
 }
