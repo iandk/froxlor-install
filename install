@@ -1,0 +1,41 @@
+#!/bin/bash
+read -e -p "Enter your option [stable/git/config-services]: " source
+if [ "$source" == "stable" ]
+    then
+      echo -e "\e[32mInstalling Froxlor stable.."
+      sleep 2
+      apt update && apt install -y htop net-tools apache2 mariadb-server git curl unzip php7.0 php7.0-mysql php7.0-xml php7.0-mbstring php7.0-curl php7.0-zip php7.0-bcmath php7.0-fpm libapache2-mod-php7.0
+      cd /var/www/html
+      wget https://files.froxlor.org/releases/froxlor-latest.tar.gz
+      tar xvfz  froxlor-latest.tar.gz
+      rm froxlor-latest.tar.gz
+      rm index.html
+      chown -R www-data:www-data froxlor
+      mysql -e  "update mysql.user set plugin='' where user='root';flush privileges;"
+      mysql_secure_installation
+      echo -e "\e[32mInstalled Froxlor stable successfully!"
+      ipv4=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1')
+      echo "Your can now access it http://$ipv4/froxlor"
+elif [ "$source" == "git" ]
+    then
+      echo -e "\e[32mInstalling Froxlor git.."
+      sleep 2
+      apt update && apt install -y htop net-tools apache2 mariadb-server git curl unzip php7.0 php7.0-mysql php7.0-xml php7.0-mbstring php7.0-curl php7.0-zip php7.0-bcmath php7.0-fpm libapache2-mod-php7.0
+      cd /var/www/html
+      git clone https://github.com/Froxlor/Froxlor.git
+      mv Froxlor froxlor
+      rm index.html
+      chown -R www-data:www-data froxlor
+      mysql -e  "update mysql.user set plugin='' where user='root';flush privileges;"
+      mysql_secure_installation
+      echo -e "\e[32mInstalled Froxlor git successfully!"
+      ipv4=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1')
+      echo "Your can now access it http://$ipv4/froxlor"
+    elif [ "$source" == "config-services" ]
+        then
+      echo -e "\e[32mConfiguring services.."
+      sleep 2
+      php /var/www/html/froxlor/install/scripts/config-services.php --froxlor-dir=/var/www/html/froxlor --apply=https://raw.githubusercontent.com/ianklemm/froxlor-install/master/config.json --import-settings=https://raw.githubusercontent.com/ianklemm/froxlor-install/master/settings.json
+    else
+      exit 1
+    fi
