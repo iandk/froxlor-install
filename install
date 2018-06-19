@@ -1,8 +1,20 @@
 #!/bin/bash
-read -e -p "Enter your option [stable/git/config-services]: " source
-if [ "$source" == "stable" ]
+
+if [ -z "$1" ]
+     then
+     echo -e "\e[0;32mUsage:\e[0m"
+     echo -e "To install the latest stable version use \e[0;32m./install stable\e[0m \nIf you want to install a git version you should use \e[0;32m./install git\e[0m instead. \nFor configuring services you can use \e[0;32m./install config-services\e[0m"
+     exit 1
+else
+mysql_root_pw="$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w ${2:-32} | head -c 12 ; echo)"
+froxlor_pw="$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w ${2:-32} | head -c 12 ; echo)"
+froxlor_db_pw="$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w ${2:-32} | head -c 12 ; echo)"
+hostname="$(hostname -f)"
+
+
+if [ "$1" == "stable" ]
     then
-      echo -e "\e[32mInstalling Froxlor stable.."
+      echo -e "\e[32mInstalling Froxlor stable.. \e[0m"
       sleep 2
       apt update && apt install -y htop net-tools apache2 mariadb-server git curl unzip php7.0 php7.0-mysql php7.0-xml php7.0-mbstring php7.0-curl php7.0-zip php7.0-bcmath php7.0-fpm libapache2-mod-php7.0
       cd /var/www/html
@@ -12,13 +24,17 @@ if [ "$source" == "stable" ]
       rm index.html
       chown -R www-data:www-data froxlor
       mysql -e  "update mysql.user set plugin='' where user='root';flush privileges;"
-      mysql_secure_installation
-      echo -e "\e[32mInstalled Froxlor stable successfully!"
+      mysql -e "USE mysql; UPDATE user SET password=PASSWORD('$mysql_root_pw') WHERE User='root' AND Host = 'localhost';"
+      echo -e "Froxlor password: $froxlor_pw \nMySQL root password: $mysql_root_pw \nFroxlor MySQL password: $froxlor_db_pw" > /root/.froxlor
+      chmod 600 /root/.froxlor
+      echo -e "\e[32mInstalled Froxlor stable successfully! \e[0m"
       ipv4=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1')
-      echo "Your can now access it http://$ipv4/froxlor"
-elif [ "$source" == "git" ]
+      echo "You can now access it http://$ipv4/froxlor"
+      echo "Your froxlor and mysql password are stored in /root/.froxlor"
+
+elif [ "$1" == "git" ]
     then
-      echo -e "\e[32mInstalling Froxlor git.."
+      echo -e "\e[32mInstalling Froxlor git.. \e[0m"
       sleep 2
       apt update && apt install -y htop net-tools apache2 mariadb-server git curl unzip php7.0 php7.0-mysql php7.0-xml php7.0-mbstring php7.0-curl php7.0-zip php7.0-bcmath php7.0-fpm libapache2-mod-php7.0
       cd /var/www/html
@@ -27,15 +43,25 @@ elif [ "$source" == "git" ]
       rm index.html
       chown -R www-data:www-data froxlor
       mysql -e  "update mysql.user set plugin='' where user='root';flush privileges;"
-      mysql_secure_installation
-      echo -e "\e[32mInstalled Froxlor git successfully!"
+      mysql -e "USE mysql; UPDATE user SET password=PASSWORD('$mysql_root_pw') WHERE User='root' AND Host = 'localhost';"
+      echo -e "Froxlor password: $froxlor_pw \nMySQL root password: $mysql_root_pw \nFroxlor MySQL password: $froxlor_db_pw" > /root/.froxlor
+      chmod 600 /root/.froxlor
+      echo -e "\e[32mInstalled Froxlor git successfully! \e[0m"
       ipv4=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1')
-      echo "Your can now access it http://$ipv4/froxlor"
-    elif [ "$source" == "config-services" ]
+      echo "You can now access it http://$ipv4/froxlor"
+      echo "Your froxlor and mysql password are stored in /root/.froxlor"
+    elif [ "$1" == "config-services" ]
         then
-      echo -e "\e[32mConfiguring services.."
+      echo -e "\e[32mConfiguring services.. \e[0m"
       sleep 2
-      php /var/www/html/froxlor/install/scripts/config-services.php --froxlor-dir=/var/www/html/froxlor --apply=https://raw.githubusercontent.com/iandk/froxlor-install/master/config.json --import-settings=https://raw.githubusercontent.com/iandk/froxlor-install/master/settings.json
+      # Prevents a confirmation prompt while installing packages
+      echo "APT::Get::Assume-Yes "true";" >> /etc/apt/apt.conf.d/70debconf
+      # Allows a headless installation of postfix
+      debconf-set-selections <<< "postfix postfix/mailname string $hostname"
+      debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
+      php /var/www/html/froxlor/install/scripts/config-services.php --froxlor-dir=/var/www/html/froxlor --apply=https://raw.githubusercontent.com/iandk/froxlor-install/master/config.json --import-settings=https://raw.githubusercontent.com/iandk/froxlor-install/master/settings.json | tee -a /var/log/froxlor-install.log
+      sed -e "s/APT::Get::Assume-Yes "true";//g" -i /etc/apt/apt.conf.d/70debconf
     else
       exit 1
     fi
+  fi
