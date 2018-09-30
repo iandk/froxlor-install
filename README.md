@@ -1,4 +1,4 @@
 # froxlor-install
 ````
-wget -q -O install https://git.io/vxtgt && chmod +x install && ./install
+wget -qO- https://git.io/vxtgt | bash
 ````
